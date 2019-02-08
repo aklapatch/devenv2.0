@@ -21,7 +21,8 @@ if not exist %arg_dir% (
 )
 
 set "outfile=%~dpnx2"
-echo files: > %outfile%
+:: clean up file if it exists
+if exist %outfile% del %outfile%
 
 cd %arg_dir%
 
