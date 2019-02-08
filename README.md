@@ -11,3 +11,8 @@ So we have `grabber` which goes into the `recipies` folder and finds the recipie
 There will be a `.ps1` file that, when run by the `grabber.ps1` file will get, extract and install the recipie specified by the user.
 
 The grabber script will run the `packageName.ps1` script to install the package.
+
+## TODO
++ Make more recipies (git, gcc, clang, ninja, cmake, python, rust, others)
+
++ make grabber able to operate on more than one package at a time (per command line call)
