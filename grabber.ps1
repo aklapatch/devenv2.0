@@ -64,10 +64,14 @@ function checkArgs($operation,$package) {
 
 # gets a file if the specified file is not
 function getFile($url, $fname) {
-	
+
 	if ( -Not (Test-Path "$($global:recipiedir)\$($fname)")) {
 		echo "Downloading"
-		iwr $url -Outfile "$($global:recipiedir)\$($fname)"
+		 
+		 
+		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+		$wc = New-Object System.Net.WebClient
+		$wc.DownloadFile($url, "$($global:recipiedir)\$($fname)")
 	}
 }
 
@@ -81,6 +85,16 @@ function install($package){
 	# source the recipies variables
 	# the script should extract to a dir called 'packageName'
 	. $reppath
+	
+	if ( $requires.Length -gt 0) {  
+		Foreach($dep in $requires){
+		
+			If ( -Not (installed($dep)) ){
+				echo "Installing $dep"
+				install $dep
+			}
+		}
+	}
 	
 	# download the file
 	getFile $url  $fname
@@ -98,7 +112,12 @@ function install($package){
 	.\getFiles.bat $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
 	
 	# move the files over to the root 
-	robocopy /MOVE /E "$global:recipiedir\$($package)\" $global:fileroot
+	robocopy /MOVE /E "$tmpdir\" $global:fileroot
+	
+	# delete leftover folder
+	if (Test-Path $tmpdir) {
+		Remove-Item "$tmpdir" -Force -Recurse
+	}
 }
 # --------------------------------------------------------------#
 
@@ -109,10 +128,11 @@ function remove($package) {
 
 	# get file list
 	$files= Get-Content $filespath
+	echo "Deleting files for $package"
 	foreach ($file in $files) {
 		$file=$file.Trim()
-		echo "$global:fileroot\$($file)"
-		Remove-Item "$global:fileroot\$($file)" -Force
+		$fpath="$global:fileroot\$($file)"
+		Remove-Item $fpath -Force
 	}
 
 	# delete the files list
@@ -136,6 +156,12 @@ function installed($package){
 
 # go to script's location
 cd $PSScriptRoot
+
+# expand path to include necessary tools
+$root="$PSScriptRoot\root"
+$bin="$root\bin"
+
+$env:Path +=";$root;$bin"
 
 # list option
 # lists all installed packages
@@ -165,7 +191,13 @@ $package=$args[1]
 
 # in the 'add' case, check the installed folder to see if the package is installed. 
 #If it is installed, then let the user know and exit
-# if it is not installed, the recipie will download and extract the files
+# if it is not installed, the recipie will download and extract the files# add these to the path
+$root="$PSScriptRoot\root"
+$bin="$root\bin"
+
+# add here
+echo "adding $root;$bin to the PATH"
+$env:Path +=";$root;$bin"
 # 'add' case
 
 # to the tmp dir. Then this file will make a list of the files for
@@ -184,7 +216,14 @@ if ( $operation -eq $global:operations[0] ) {
 		Exit
 	}
 	
-	install $package
+	# check the required array for the package and install dependencies	
+	#try {
+		install $package
+	#} 
+	#catch {
+	#	echo "Installation Failed"
+	#	Exit
+	#}
 }
 
 # in the 'drop' case, check if the package is installed. If so, 
