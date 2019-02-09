@@ -1,7 +1,8 @@
 # two options, install and remove
 
-$global:operations=@("add","drop")
+$global:operations=@("add","drop","check","list")
 $global:recipiedir= -join($PSScriptRoot,"\recipies")
+$global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
 
 # gets available recipies and prints them
@@ -70,16 +71,94 @@ function getFile($url, $fname) {
 	}
 }
 
+# --------------------------------------------------------------#
+
+function install($package){
+	
+		# call download and extract script
+	$reppath="$global:recipiedir\$($package)$(".ps1")"
+	
+	# source the recipies variables
+	# the script should extract to a dir called 'packageName'
+	. $reppath
+	
+	# download the file
+	getFile $url  $fname
+	
+	$tmpdir="$global:recipiedir\$($package)"
+	$file_path="$global:recipiedir\$($fname)"
+	
+	if (Test-Path $tmpdir) {
+		Remove-Item $tmpdir -Force -Recurse
+	}
+	# extract the files
+	arrange $file_path $tmpdir
+	
+	# use getFiles.bat to catalog the files
+	.\getFiles.bat $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
+	
+	# move the files over to the root 
+	robocopy /MOVE /E "$global:recipiedir\$($package)\" $global:fileroot
+}
+# --------------------------------------------------------------#
+
+function remove($package) {
+	
+	
+	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
+
+	# get file list
+	$files= Get-Content $filespath
+	foreach ($file in $files) {
+		$file=$file.Trim()
+		echo "$global:fileroot\$($file)"
+		Remove-Item "$global:fileroot\$($file)" -Force
+	}
+
+	# delete the files list
+	del $filespath
+}
 
 # --------------------------------------------------------------#
-### SCRIPT MAIN FLOW STARTS HERE ###
 
-# check args and usage
-checkArgs $args[0] $args[1]
+function installed($package){
+	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
+
+	# package is installed
+	if ( Test-Path $filespath ) {
+		return $true
+	}
+	return $false
+}
+
+# --------------------------------------------------------------#
+# SCRIPT MAIN FLOW STARTS HERE #
 
 # go to script's location
 cd $PSScriptRoot
 
+# list option
+# lists all installed packages
+# iterates through the installed directory and sees which items are installed
+if ($args[0] -eq $global:operations[3]) {
+	
+
+	if (-Not (Test-Path $global:installeddir)) {
+		Write-Output "Installation is not valid"
+	}
+	
+	echo "You have these packages installed: "
+
+	$rep_len=$global:recipiedir.Length
+	Get-ChildItem $global:recipiedir -Filter *_files.txt | 	Foreach-Object {
+		$diff_len=$_.FullName.Length - $rep_len -1
+		echo $_.FullName.substring($rep_len+1, $diff_len-4)	
+	} 
+	Exit
+}
+
+# check args and usage
+checkArgs $args[0] $args[1]
 
 $operation=$args[0]
 $package=$args[1]
@@ -99,63 +178,39 @@ if ( $operation -eq $global:operations[0] ) {
 	# the recipie exists
 	
 	# check if a package is installed
-	$filespath="$global:recipiedir\install\$($package)$("_files.txt")"
-	if ( Test-Path $filespath ) {
+	if ( installed $package ) {
 		Write-Output "$package is already installed"
 
 		Exit
 	}
 	
-	# call download and extract script
-	$reppath="$global:recipiedir\$($package)$(".ps1")"
-	
-	# source the recipies variables
-	# the script should extract to a dir called 'packageName'
-	. $reppath
-	
-	# download the file
-	getFile $url  $fname
-	
-	$tmpdir="$global:recipiedir\$($package)"
-	$file_path="$global:recipiedir\$($fname)"
-	
-	Remove-Item $tmpdir -Force -Recurse
-	
-	# extract the files
-	arrange $file_path $tmpdir
-	
-	# use getFiles.bat to catalog the files
-	.\getFiles.bat $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
-	
-	# move the files over to the root 
-	robocopy /MOV /MIR  "$global:recipiedir\$($package)" $global:fileroot
-
-	# delete the extraction dir
-	Remove-Item $tmpdir -Recurse -Force
+	install $package
 }
 
 # in the 'drop' case, check if the package is installed. If so, 
 # then delete all the files on the file list. If not, then let the user know and exit.
 if ( $operation -eq $global:operations[1] ) {
 	
-	# check if a package is installed
-	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
-
-	if ( -Not ( Test-Path $filespath) ) {
+	if ( -Not (installed $package) ) {
 		Write-Output "$package is not installed"
 
 		Exit
 	}
 	
-	# get file list
-	$files= Get-Content $filespath
-	foreach ($file in $files) {
-		$file=$file.Trim()
-		echo "$global:fileroot\$($file)"
-		Remove-Item "$global:fileroot\$($file)" -Force
-	}
-
-	# delete the files list
-	del $filespath
+	remove $package
 }
 
+# in the 'check' case, you check the files dir and say if the recipie is installed
+if ($operation -eq $global:operations[2] ) {
+	
+	if ( installed $package ) {
+		echo "$package is installed"
+		
+		Exit
+	}
+	else {
+		echo "$package is not installed"
+		
+		Exit
+	}
+}
