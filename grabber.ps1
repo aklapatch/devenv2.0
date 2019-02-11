@@ -38,6 +38,8 @@ function checkArgs($operation,$package) {
 		Write-Output "Usage:    $PSCommandPath operation packageName"
 		Write-Output "Possible operations: add (retrieves and installs packages)"
 		Write-Output "                     drop (uninstalls package)"
+		Write-Output "                     list (lists installed packages)"
+		Write-Output "                     check (checks if the specified package is installed)"
 		Exit
 	}
 	
@@ -112,7 +114,7 @@ function install($package){
 	.\getFiles.bat $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
 	
 	# move the files over to the root 
-	robocopy /MOVE /E "$tmpdir\" $global:fileroot
+	robocopy /MOVE /E /njh /njs /ndl /nc /ns "$tmpdir\" $global:fileroot
 	
 	# delete leftover folder
 	if (Test-Path $tmpdir) {
@@ -172,13 +174,12 @@ if ($args[0] -eq $global:operations[3]) {
 	if (-Not (Test-Path $global:installeddir)) {
 		Write-Output "Installation is not valid"
 	}
-	
-	echo "You have these packages installed: "
 
-	$rep_len=$global:recipiedir.Length
-	Get-ChildItem $global:recipiedir -Filter *_files.txt | 	Foreach-Object {
-		$diff_len=$_.FullName.Length - $rep_len -1
-		echo $_.FullName.substring($rep_len+1, $diff_len-4)	
+	$path_len=$global:installeddir.Length
+	Get-ChildItem "$global:installeddir" -Filter *_files.txt | 	Foreach-Object {
+		$file_str=$_.FullName.substring($path_len +1)
+		echo ($file_str -replace '_files.txt',' ')
+		
 	} 
 	Exit
 }

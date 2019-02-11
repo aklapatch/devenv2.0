@@ -13,5 +13,5 @@ function arrange($fname, $exdir) {
 
 	# we just need to move the files into the tmp dir
 	7z x "$fname" -o"$exdir"
-	echo "Please run the post-install.bat script in the installation dir."
+	echo "Please run the post-install.bat script in the installation directory."
 }
