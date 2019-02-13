@@ -64,7 +64,7 @@ function checkArgs($operation,$package) {
 }
 # --------------------------------------------------------------#
 
-# gets a file if the specified file is not
+# gets a file if the specified file is not present
 function getFile($url, $fname) {
 
 	if ( -Not (Test-Path "$($global:recipiedir)\$($fname)")) {
@@ -80,6 +80,11 @@ function getFile($url, $fname) {
 # --------------------------------------------------------------#
 
 function install($package){
+
+	if (installed $package){
+		Write-Output "$package is installed"
+		return
+	}
 	
 		# call download and extract script
 	$reppath="$global:recipiedir\$($package)$(".ps1")"
@@ -98,8 +103,17 @@ function install($package){
 		}
 	}
 	
-	# download the file
-	getFile $url  $fname
+	$pkgver=0
+	if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
+		echo "Downloading"
+		 
+		 
+		# download the file
+		$pkgver=getFile $base_url  $download_name
+		
+		# move the file
+		move $download_name $global:recipiedir
+	}
 	
 	$tmpdir="$global:recipiedir\$($package)"
 	$file_path="$global:recipiedir\$($fname)"
@@ -127,6 +141,13 @@ function remove($package) {
 	
 	
 	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
+	
+	#
+	$reppath="$global:recipiedir\$($package)$(".ps1")"
+	
+	# source the recipies variables
+	# the script should extract to a dir called 'packageName'
+	. $reppath
 
 	# get file list
 	$files= Get-Content $filespath
@@ -136,6 +157,9 @@ function remove($package) {
 		$fpath="$global:fileroot\$($file)"
 		Remove-Item $fpath -Force
 	}
+	
+	# run cleanup script
+	cleanUp $global:fileroot
 
 	# delete the files list
 	del $filespath
