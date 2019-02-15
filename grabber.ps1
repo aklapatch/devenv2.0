@@ -125,7 +125,7 @@ function install($package){
 		echo "Downloading file for $package"
 		 
 		# download file
-		iwr $url -OutFile "$global:recipiedir\$download_name"
+		(New-Object System.Net.WebClient).DownloadFile($url,"$global:recipiedir\$download_name")
 	}
 	
 	$tmpdir="$global:recipiedir\$($package)"
