@@ -35,4 +35,4 @@ Each recipie needs to have a couple things. Variable conventions are influenced 
 	This function should take two parameters, the first is the path of an archive to extract and the directory to extract that archive into.
 + A `cleanUp` function that performs cleanup tasks, such as deleting files that may have not been initially cataloged, such as additional npm or pip packages.
 + A `$download_name` variable that specifies the name of the file that the `getFile` function downloads
-+ A `getFile` function that gets the latest version of the package and returns the package version as a string.
++ A `getInfo` function that gets the url of the latest version of the package and returns the package version as a string, and the latest url as a string (in an array).

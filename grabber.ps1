@@ -5,6 +5,31 @@ $global:recipiedir= -join($PSScriptRoot,"\recipies")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
 
+# catalogs files and prints them all to a text file 
+function catalogFiles($dir_name,$out_file) {
+
+	if ( -Not (Test-Path $dir_name)){
+		Write-Output "catalogFiles failed since the directory is invalid"
+		return
+	}
+
+	# clear the output file
+	if ( Test-Path $out_file ){
+		Remove-Item -Force $out_file
+	}
+	
+	$len=$dir_name.length
+	
+	# go through all the files in the directory
+	get-childItem $dir_name -recurse -file | foreach-object {
+		
+		# filter out the dir_name
+		$short_path=$_.FullName.substring($len)
+		
+		echo "$short_path" >> $out_file
+	}	
+}
+
 # gets available recipies and prints them
 function listRecipies {
 	
@@ -64,21 +89,7 @@ function checkArgs($operation,$package) {
 }
 # --------------------------------------------------------------#
 
-# gets a file if the specified file is not present
-function getFile($url, $fname) {
-
-	if ( -Not (Test-Path "$($global:recipiedir)\$($fname)")) {
-		echo "Downloading"
-		 
-		 
-		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-		$wc = New-Object System.Net.WebClient
-		$wc.DownloadFile($url, "$($global:recipiedir)\$($fname)")
-	}
-}
-
-# --------------------------------------------------------------#
-
+# installs the specified package
 function install($package){
 
 	if (installed $package){
@@ -103,42 +114,52 @@ function install($package){
 		}
 	}
 	
-	$pkgver=0
-	if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
-		echo "Downloading"
-		 
-		 
-		# download the file
-		$pkgver=getFile $base_url  $download_name
+	$pkgver=0	
+	# get file information
+	$pkginfo=getInfo $base_url
 		
-		# move the file
-		move $download_name $global:recipiedir
+	$url=$pkginfo[1]
+	$pkgver=$pkginfo[0]
+		
+	if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
+		echo "Downloading file for $package"
+		 
+		# download file
+		iwr $url -OutFile "$global:recipiedir\$download_name"
 	}
 	
 	$tmpdir="$global:recipiedir\$($package)"
-	$file_path="$global:recipiedir\$($fname)"
+	$file_path="$global:recipiedir\$($download_name)"
 	
 	if (Test-Path $tmpdir) {
+		Write-Output "`nRemoving extraction directory before extraction"
 		Remove-Item $tmpdir -Force -Recurse
 	}
+	
 	# extract the files
+	Write-Output "`nArranging files for $package"
 	arrange $file_path $tmpdir
 	
 	# use getFiles.bat to catalog the files
-	.\getFiles.bat $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
+	Write-Output "`nCataloging files for $package"
+	catalogFiles $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
+	
+	#output the version of the file
+	echo "$pkgver" > "$global:installeddir\$package-version"
 	
 	# move the files over to the root 
-	robocopy /MOVE /E /njh /njs /ndl /nc /ns "$tmpdir\" $global:fileroot
+	Write-Output "`nCopying over files for $package"
+	robocopy /MOVE /E /njh /njs /ndl /nc /ns /np /nfl "$tmpdir\" $global:fileroot
 	
 	# delete leftover folder
 	if (Test-Path $tmpdir) {
+		Write-Output "`nDeleting extraction directory"
 		Remove-Item "$tmpdir" -Force -Recurse
 	}
 }
 # --------------------------------------------------------------#
 
 function remove($package) {
-	
 	
 	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
 	
@@ -151,18 +172,22 @@ function remove($package) {
 
 	# get file list
 	$files= Get-Content $filespath
-	echo "Deleting files for $package"
+
+	Write-Output "`nDeleting files for $package"
 	foreach ($file in $files) {
 		$file=$file.Trim()
 		$fpath="$global:fileroot\$($file)"
-		Remove-Item $fpath -Force
+
+		Remove-Item -force  $fpath 
 	}
 	
+	# delete the files list and the version file
+	Remove-Item $filespath  -Force
+	Remove-Item "$global:installeddir\$package-version*"  -Force
+	
 	# run cleanup script
+	Write-Output "`nRunning cleanup function"
 	cleanUp $global:fileroot
-
-	# delete the files list
-	del $filespath
 }
 
 # --------------------------------------------------------------#
@@ -202,7 +227,9 @@ if ($args[0] -eq $global:operations[3]) {
 	$path_len=$global:installeddir.Length
 	Get-ChildItem "$global:installeddir" -Filter *_files.txt | 	Foreach-Object {
 		$file_str=$_.FullName.substring($path_len +1)
-		echo ($file_str -replace '_files.txt',' ')
+		$item=($file_str -replace '_files.txt','')
+		$version=Get-Content -Path "$global:installeddir\$item-version"
+		Write-Output "$item $version"
 		
 	} 
 	Exit
