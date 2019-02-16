@@ -117,7 +117,8 @@ function install($package){
 	$pkgver=0	
 	# get file information
 	$pkginfo=getInfo $base_url
-		
+	Write-Output $pkginfo
+	#Exit	
 	$url=$pkginfo[1]
 	$pkgver=$pkginfo[0]
 		
@@ -247,8 +248,7 @@ $package=$args[1]
 $root="$PSScriptRoot\root"
 $bin="$root\bin"
 
-# add here
-echo "adding $root;$bin to the PATH"
+# add installed tools to path
 $env:Path +=";$root;$bin"
 # 'add' case
 
