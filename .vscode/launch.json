@@ -17,7 +17,7 @@
             "request": "launch",
             "name": "PowerShell Launch Current File in Temporary Console",
             "script": "${file}",
-            "args": ["add","conemu"],
+            "args": ["julia","getInfo"],
             "cwd": "${file}",
             "createTemporaryIntegratedConsole": true
         },

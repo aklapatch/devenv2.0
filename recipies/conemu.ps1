@@ -31,8 +31,6 @@ function getInfo($base_url) {
 	$year=$version.Substring(0,2)
 	$month=$version.Substring(2,2)
 	$day=$version.Substring(4,2)
-	
-	Write-Output "$base_url/download/v$year.$month.$day/ConEmuPack.$version.7z"
 
 	return @($version,"$base_url/download/v$year.$month.$day/ConEmuPack.$version.7z")
 }

@@ -1,9 +1,12 @@
-# two options, install and remove
 
 $global:operations=@("add","drop","check","list")
 $global:recipiedir= -join($PSScriptRoot,"\recipies")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
+
+# TODO make an update function that checks for a new version and installs it
+#	* Make the add function look for a newer version before not installing.
+# 	* Have the add function display the version that it is installing
 
 # catalogs files and prints them all to a text file 
 function catalogFiles($dir_name,$out_file) {
@@ -117,7 +120,6 @@ function install($package){
 	$pkgver=0	
 	# get file information
 	$pkginfo=getInfo $base_url
-	Write-Output $pkginfo
 	#Exit	
 	$url=$pkginfo[1]
 	$pkgver=$pkginfo[0]
@@ -173,18 +175,32 @@ function remove($package) {
 
 	# get file list
 	$files= Get-Content $filespath
+	
+	
+	$other_files=""
+	# get a list of all other to make sure duplicate files are not deleted
+	Get-ChildItem $global:installeddir -Filter *_files.txt | foreach-object {
+		
+		# don't count the $package file
+		if (-Not ($_.FullName -Like "$package*") ){
+			
+			$other_files -join $(Get-Content $_.FullName)
+		}
+	}
+	Write-Output $other_files
+	
 
 	Write-Output "`nDeleting files for $package"
 	foreach ($file in $files) {
 		$file=$file.Trim()
 		$fpath="$global:fileroot\$($file)"
 
-		Remove-Item -force  $fpath 
+		Remove-Item -force $fpath 
 	}
 	
 	# delete the files list and the version file
 	Remove-Item $filespath  -Force
-	Remove-Item "$global:installeddir\$package-version*"  -Force
+	Remove-Item "$global:installeddir\$package-version"  -Force
 	
 	# run cleanup script
 	Write-Output "`nRunning cleanup function"
