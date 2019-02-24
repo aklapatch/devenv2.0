@@ -182,20 +182,22 @@ function remove($package) {
 	Get-ChildItem $global:installeddir -Filter *_files.txt | foreach-object {
 		
 		# don't count the $package file
-		if (-Not ($_.FullName -Like "$package*") ){
+		if (-Not ($_.Name -Like "$package*") ){
 			
-			$other_files -join $(Get-Content $_.FullName)
+			$other_files+=$(Get-Content $_.FullName)
 		}
-	}
-	Write-Output $other_files
-	
+	}	
 
 	Write-Output "`nDeleting files for $package"
 	foreach ($file in $files) {
 		$file=$file.Trim()
 		$fpath="$global:fileroot\$($file)"
 
-		Remove-Item -force $fpath 
+		# only delete files that are not duplicates
+		if ( -Not( $other_files.contains($file) )){
+
+			Remove-Item -force $fpath 
+		}
 	}
 	
 	# delete the files list and the version file
