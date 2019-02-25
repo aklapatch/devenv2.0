@@ -1,5 +1,5 @@
 
-$global:operations=@("add","drop","check","list")
+$global:operations=@("add","drop","check","list","clean")
 $global:recipiedir= -join($PSScriptRoot,"\recipies")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
@@ -232,6 +232,23 @@ $root="$PSScriptRoot\root"
 $bin="$root\bin"
 
 $env:Path +=";$root;$bin"
+
+# in the clean case, source every recipie and delete every download name from that recipie
+if ($args[0] -eq $global:operations[4]){
+	# get each script and delete its file
+	Get-ChildItem $global:recipiedir -Filter *.ps1 | foreach-object {
+		
+		# source script
+		. $_.FullName
+		
+		# delete file if it is there
+		if (Test-Path "$global:recipiedir\$download_name" ){
+			
+			Remove-Item "$global:recipiedir\$download_name"
+		}
+	}
+	Exit
+}
 
 # list option
 # lists all installed packages

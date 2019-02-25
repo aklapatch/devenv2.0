@@ -4,7 +4,6 @@ $pkgname="nvim"
 # required dependencies
 $requires=@("7zip")
 
-#https://www.7-zip.org/a/7z1806-x64.msi"https://julialang-s3.julialang.org/bin/winnt/x64/1.1/julia-1.1.0-win64.exe
 $base_url="https://github.com/neovim/neovim/releases/latest"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
