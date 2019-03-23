@@ -28,6 +28,8 @@ function catalogFiles($dir_name,$out_file) {
 		
 		# filter out the dir_name
 		$short_path=$_.FullName.substring($len)
+
+		# make the installed dir if is is not there
 		if ( -Not(Test-Path $global:installeddir) ){
 			mkdir $global:installeddir
 		}
@@ -372,6 +374,12 @@ if ($operation -eq $global:operations[2] ) {
 # use the getinfo version to check if the version that you have now is < the
 # remote version. Then install the new version
 if ($operation -eq $global:operations[5]) {
+
+	if (-Not(installed $package){
+		Write-Output "$package is not installed"
+		Exit
+	}
+
   # get the package local version
   $LocalVer = getLocalVersion($package)
 
