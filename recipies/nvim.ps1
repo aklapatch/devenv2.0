@@ -31,11 +31,11 @@ function getInfo($base_url) {
 	
 	$dex=$page.IndexOf("/nvim-win64.zip")
 	# pull out version
-	$version=$page.Substring($dex-5,5)
+	$version=$page.Substring($dex - 5, 5)
 
-	$MaVer=$version.Substring(0,1)
-	$MiVer=$version.Substring(2,1)
-	$Rev=$version.Substring(4,1)
+	$MaVer=$version.Substring(0, 1)
+	$MiVer=$version.Substring(2, 1)
+	$Rev=$version.Substring(4, 1)
 
 	return @($version,"https://github.com/neovim/neovim/releases/download/v$MaVer.$MiVer.$Rev/nvim-win64.zip")
 }

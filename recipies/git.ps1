@@ -1,17 +1,44 @@
 # package details
 $pkgname="git"
-$pkgver="2.20.1"
 
 # packages that this one needs to install it
 $requires=@("7zip")
-#https://github.com/git-for-windows/git/releases/download/v2.20.1.windows.1/PortableGit-2.20.1-64-bit.7z.exe
-$url="https://github.com/git-for-windows/git/releases/download/v$pkgver.windows.1/PortableGit-$pkgver-64-bit.7z.exe"
+#https://git-scm.com/download/win
+$base_url="https://git-scm.com/download/win"
 # name of the file once downloaded (it will be named that once the main script downloads it)
-$fname="git$($pkgver).exe"
+$download_name="$pkgname.exe"
 
 function arrange($fname, $exdir) {
 
 	# we just need to move the files into the tmp dir
 	7z x "$fname" -o"$exdir"
-	echo "Please run the post-install.bat script in the installation directory."
+}
+
+function getInfo($base_url) {
+	# go to the download page and download the first file from top to bottom
+	# that has a certain pattern
+	
+	
+	$site=iwr "$base_url"
+	$links=$site.links
+	foreach ($link in $links) {
+		if($link.href -Like "*PortableGit*64*7z.exe"){
+			
+			$url_extension=$link.href
+			break
+		}
+	}
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	# pull out version
+	$startDex=$url_extension.indexOf("leGit-") + 6
+	$EndDex = $url_extension.indexOf("-64-bit.7z.exe")
+	$version=$url_extension.substring($startDex, $EndDex - $startDex)
+	
+	# returns both values
+	$version
+	$url_extension
+}
+
+function cleanUp($root_dir){
+
 }

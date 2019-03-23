@@ -1,5 +1,5 @@
 
-$global:operations=@("add","drop","check","list","clean")
+$global:operations=@("add","drop","check","list","clean","update")
 $global:recipiedir= -join($PSScriptRoot,"\recipies")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
@@ -28,7 +28,9 @@ function catalogFiles($dir_name,$out_file) {
 		
 		# filter out the dir_name
 		$short_path=$_.FullName.substring($len)
-		
+		if ( -Not(Test-Path $global:installeddir) ){
+			mkdir $global:installeddir
+		}
 		echo "$short_path" >> $out_file
 	}	
 }
@@ -120,9 +122,10 @@ function install($package){
 	$pkgver=0	
 	# get file information
 	$pkginfo=getInfo $base_url
-	#Exit	
+	
 	$url=$pkginfo[1]
 	$pkgver=$pkginfo[0]
+	Write-Output "Installing $package version $pkgver"
 		
 	if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
 		echo "Downloading file for $package"
@@ -176,7 +179,6 @@ function remove($package) {
 	# get file list
 	$files= Get-Content $filespath
 	
-	
 	$other_files=""
 	# get a list of all other to make sure duplicate files are not deleted
 	Get-ChildItem $global:installeddir -Filter *_files.txt | foreach-object {
@@ -222,6 +224,32 @@ function installed($package){
 }
 
 # --------------------------------------------------------------#
+
+function getLocalVersion($package) {
+  $version = Get-Content "$global:installeddir\$package-version"
+  return getIntFromVer($version)
+}
+
+# --------------------------------------------------------------#
+function getRemoteVersion($package) {
+  # call download and extract script
+	$reppath="$global:recipiedir\$($package)$(".ps1")"
+	
+	# source the recipies variables
+	# the script should extract to a dir called 'packageName'
+  . $reppath
+  
+  $version,$url = getInfo $base_url
+
+  return getIntFromVer($version)
+}
+# --------------------------------------------------------------#
+
+function getIntFromVer($StringVersion){
+  $StringVersion = $StringVersion.replace(".", "")
+  return [convert]::ToInt32($StringVersion,10)
+}
+
 # SCRIPT MAIN FLOW STARTS HERE #
 
 # go to script's location
@@ -285,10 +313,9 @@ $bin="$root\bin"
 
 # add installed tools to path
 $env:Path +=";$root;$bin"
-# 'add' case
 
-# to the tmp dir. Then this file will make a list of the files for
-# that package with 'getFiles.bat', and check for conflicts.
+# ADD CASE
+# check for conflicts.
 # that list is put in recipies\installed. Then the files are moved
 # from the tmp dir to the 'root' directory
 if ( $operation -eq $global:operations[0] ) {
@@ -313,7 +340,7 @@ if ( $operation -eq $global:operations[0] ) {
 	#}
 }
 
-# in the 'drop' case, check if the package is installed. If so, 
+# in the DROP CASE, check if the package is installed. If so, 
 # then delete all the files on the file list. If not, then let the user know and exit.
 if ( $operation -eq $global:operations[1] ) {
 	
@@ -326,7 +353,7 @@ if ( $operation -eq $global:operations[1] ) {
 	remove $package
 }
 
-# in the 'check' case, you check the files dir and say if the recipie is installed
+# in the CHECK CASE, you check the files dir and say if the recipie is installed
 if ($operation -eq $global:operations[2] ) {
 	
 	if ( installed $package ) {
@@ -339,4 +366,29 @@ if ($operation -eq $global:operations[2] ) {
 		
 		Exit
 	}
+}
+
+# UPDATE CASE
+# use the getinfo version to check if the version that you have now is < the
+# remote version. Then install the new version
+if ($operation -eq $global:operations[5]) {
+  # get the package local version
+  $LocalVer = getLocalVersion($package)
+
+  Write-Output "Local version of $package is $LocalVer"
+
+  $RemoteVer = getRemoteVersion($package)
+
+  Write-Output "Remote version of $package is $RemoteVer"
+
+  # if remote version is newer, drop older and get newer
+  if ($RemoteVer -gt $LocalVer) {
+    
+    Write-Ouput "Updating $package to version $RemoteVer"
+
+    remove($package)
+
+    install($package)
+  }
+  Exit
 }
