@@ -50,26 +50,30 @@ function listRecipies {
 		echo $_.FullName.substring($rep_len+1, $diff_len-4)	
 	} 
 }
+ #-----------------------------------------------------------------------------
+function printUsage {
+
+	Write-Output "`nUsage:    $PSCommandPath operation packageName"
+	Write-Output "Possible operations: add (retrieves and installs packages)"
+	Write-Output "                     drop (uninstalls package)"
+	Write-Output "                     list (lists installed packages)"
+	Write-Output "                     check (checks if the specified package is installed)"
+	Write-Output "                     clean (removed cached download files)"
+}
+	
 
 # --------------------------------------------------------------#
 function checkArgs($operation,$package) {
 	
 	# check for the second arg or package
 	if ( [string]::IsNullOrEmpty($operation) ) {
-		echo
-		Write-Output "Usage: $PSCommandPath operation packageName"
-		Write-Output "Possible operations: add (retrieves and installs packages)"
-		Write-Output "                     drop (uninstalls package)"
+		printUsage
 		Exit
 	}
 	
 	# check for the second arg or package
 	if (  -Not ($operation -in $global:operations) ) {
-		Write-Output "Usage:    $PSCommandPath operation packageName"
-		Write-Output "Possible operations: add (retrieves and installs packages)"
-		Write-Output "                     drop (uninstalls package)"
-		Write-Output "                     list (lists installed packages)"
-		Write-Output "                     check (checks if the specified package is installed)"
+		printUsage
 		Exit
 	}
 	
@@ -80,6 +84,11 @@ function checkArgs($operation,$package) {
 		# print possibilities
 		listRecipies
 		Exit
+	}
+	
+	# special case to remove all files
+	if ( ($package -eq "all") -and ($operation -eq "drop")){
+		return
 	}
 	
 	# check if a package is available
@@ -171,6 +180,16 @@ function remove($package) {
 	
 	#
 	$reppath="$global:recipiedir\$($package)$(".ps1")"
+	
+	
+	# if the $package is all, just delete all the files in the root and
+	# remove the cataloged files
+	if ( $package -eq "all"){
+		Remove-Item "$global:recipiedir\installed\*"
+		Remove-Item "$global:fileroot\*" -Recurse -Force
+		
+		Exit
+	}
 	
 	# source the recipies variables
 	# the script should extract to a dir called 'packageName'
@@ -344,7 +363,10 @@ if ( $operation -eq $global:operations[0] ) {
 # then delete all the files on the file list. If not, then let the user know and exit.
 if ( $operation -eq $global:operations[1] ) {
 	
-	if ( -Not (installed $package) ) {
+	# all is a special case to delete all the installed files
+	if ( $package -eq "all"){}
+	
+	elseif ( -Not (installed $package) ) {
 		Write-Output "$package is not installed"
 
 		Exit
