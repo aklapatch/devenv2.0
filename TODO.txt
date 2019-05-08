@@ -1,0 +1,5 @@
+add recipies
+* cmake
+* ninja
+* meson
+* mingw-w64 compiler
