@@ -24,8 +24,10 @@ if ($args[0] -eq $global:operations[4]){
 	# get each script and delete its file
 	Get-ChildItem $global:recipiedir -Filter *.ps1 | foreach-object {
 		
-		# source script
-		. $_.FullName
+		# source script if it is there
+		if (Test-Path $_.FullName){
+			. $_.FullName
+		}
 		
 		# delete downloaded files if it is there
 		if (Test-Path "$global:recipiedir\$download_name" ){

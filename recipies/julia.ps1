@@ -5,7 +5,6 @@ $pkgname="julia"
 $requires=@("7zip")
 
 #https://www.7-zip.org/a/7z1806-x64.msi"https://julialang-s3.julialang.org/bin/winnt/x64/1.1/julia-1.1.0-win64.exe
-$base_url="https://julialang.org/downloads/"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.exe"
 
@@ -22,9 +21,11 @@ function arrange($fname, $exdir) {
 	Remove-Item	"$exdir\`$PLUGINSDIR" -Recurse 
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
 	# that has a certain pattern
+	
+	$base_url="https://julialang.org/downloads/"
 	
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 	

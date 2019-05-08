@@ -6,7 +6,6 @@ $requires=@()
 
 # this is the lts version
 #https://nodejs.org/en/download/
-$base_url="https://nodejs.org/en/download/"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.msi"
 
@@ -19,9 +18,10 @@ function arrange($fname, $exdir) {
 	Remove-Item "$exdir\nodejs\" -Force -Recurse
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
 	# that has the pattern '7z*-x64.msi'
+	$base_url="https://nodejs.org/en/download/"
 	
 	$site=iwr -uri "$base_url"
 	$links=$site.parsedhtml.getelementsbytagname("a")

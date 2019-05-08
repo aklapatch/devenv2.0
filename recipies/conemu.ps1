@@ -6,7 +6,6 @@ $requires=@("7zip")
 
 
 #https://github.com/Maximus5/ConEmu/releases/download/v19.01.08/ConEmuPack.190108.7z
-$base_url="https://github.com/Maximus5/ConEmu/releases"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.7z"
 
@@ -16,9 +15,11 @@ function arrange($fname, $exdir) {
 	
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
 	# that has the right pattern
+	
+	$base_url="https://github.com/Maximus5/ConEmu/releases"
 
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 	

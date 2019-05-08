@@ -6,7 +6,6 @@ $requires=@()
 
 
 #https://www.7-zip.org/a/7z1806-x64.msi"
-$base_url="https://www.7-zip.org/"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.msi"
 
@@ -19,9 +18,11 @@ function arrange($fname, $exdir) {
 	Remove-Item "$exdir\Files\" -Force -Recurse
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
 	# that has the pattern '7z*-x64.msi'
+	
+	$base_url="https://www.7-zip.org/"
 	
 	$site=iwr -uri "$base_url/download.html"
 	$links=$site.parsedhtml.getelementsbytagname("a")

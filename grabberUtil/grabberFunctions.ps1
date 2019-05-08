@@ -129,7 +129,7 @@ function install($package){
 	
 	$pkgver=0	
 	# get file information
-	$pkginfo=getInfo $base_url
+	$pkginfo=getInfo
 	
 	$url=$pkginfo[1]
 	$pkgver=$pkginfo[0]

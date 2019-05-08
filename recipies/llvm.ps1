@@ -5,7 +5,6 @@ $pkgname="llvm"
 $requires=@("7zip")
 
 #https://www.7-zip.org/a/7z1806-x64.msi"https://julialang-s3.julialang.org/bin/winnt/x64/1.1/julia-1.1.0-win64.exe
-$base_url="http://releases.llvm.org/download.html"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.exe"
 
@@ -18,10 +17,11 @@ function arrange($fname, $exdir) {
 	Remove-Item	"$exdir\`$PLUGINSDIR" -Recurse 
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
 	# that has a certain pattern
 	# http://releases.llvm.org/7.0.1/LLVM-7.0.1-win64.exe
+	$base_url="http://releases.llvm.org/download.html"
 	
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 	

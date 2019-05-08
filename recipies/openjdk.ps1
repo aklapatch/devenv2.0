@@ -6,7 +6,6 @@ $global:javaver="11"
 # required dependencies
 $requires=@("7zip")
 
-$base_url="https://jdk.java.net/"
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
 
@@ -17,9 +16,9 @@ function arrange($fname, $exdir) {
 	Remove-Item "$exdir/jdk*"
 }
 
-function getInfo($base_url) {
+function getInfo() {
 	# go to the download page and download the first file from top to bottom
-	# that has the pattern '7z*-x64.msi'
+	$base_url="https://jdk.java.net/"
 	
 	$site=iwr -uri "$base_url/$global:javaver"
 	$links=$site.parsedhtml.getelementsbytagname("a")
