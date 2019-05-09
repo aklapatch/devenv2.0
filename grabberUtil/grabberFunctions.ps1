@@ -38,6 +38,7 @@ function listRecipies {
 	
 	if (-Not (Test-Path $global:recipiedir)) {
 		Write-Output "recipiedir is not valid"
+		Exit
 	}
 	
 	echo "Possible recipies are: "
@@ -48,17 +49,6 @@ function listRecipies {
 		echo $_.FullName.substring($rep_len+1, $diff_len-4)	
 	} 
 }
- #-----------------------------------------------------------------------------
-function printUsage {
-	Write-Output "`nUsage:    $PSCommandPath operation packageName"
-	Write-Output "Possible operations: add (retrieves and installs packages)"
-	Write-Output "                     drop (uninstalls package)"
-	Write-Output "                     list (lists installed packages)"
-	Write-Output "                     check (checks if the specified package is installed)"
-	Write-Output "                     clean (removed cached download files)"
-	Write-Output "					   update (updates the specified program to a newer version if available)"
-}
-	
 
 # --------------------------------------------------------------#
 function checkArgs($operation,$package) {

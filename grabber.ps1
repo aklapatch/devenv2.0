@@ -5,6 +5,17 @@ $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
 $global:funcPath=".\grabberUtil\grabberFunctions.ps1" # a path to a script with extra functions
 
+ #-----------------------------------------------------------------------------
+ function printUsage {
+	Write-Output "`nUsage:    $PSCommandPath operation packageName"
+	Write-Output "Possible operations: add (retrieves and installs packages)"
+	Write-Output "                     drop (uninstalls package)"
+	Write-Output "                     list (lists installed packages)"
+	Write-Output "                     check (checks if the specified package is installed)"
+	Write-Output "                     clean (removed cached download files)"
+	Write-Output "                     update (updates the specified program to a newer version if available)"
+}
+
 # SCRIPT MAIN FLOW STARTS HERE #===============================================
 
 # go to script's location
