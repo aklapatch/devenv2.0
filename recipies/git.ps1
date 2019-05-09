@@ -10,7 +10,7 @@ $download_name="$pkgname.exe"
 function arrange($fname, $exdir) {
 
 	# we just need to move the files into the tmp dir
-	7z x "$fname" -o"$exdir"
+	7z x "$fname" -o"$exdir" | out-null
 }
 
 function getInfo() {

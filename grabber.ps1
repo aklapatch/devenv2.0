@@ -96,6 +96,8 @@ foreach ($package in $packages){
 			
 			# check the required array for the package and install dependencies	
 			install $package
+
+			continue
 		}
 
 		# in the DROP CASE, check if the package is installed. If so, 
@@ -110,6 +112,8 @@ foreach ($package in $packages){
 			}
 			
 			remove $package
+
+			continue
 		}
 
 		# in the CHECK CASE, you check the files dir and say if the recipie is installed
@@ -121,6 +125,7 @@ foreach ($package in $packages){
 			else {
 				echo "$package is not installed"
 			}
+			continue
 		}
 
 		# UPDATE CASE
@@ -133,24 +138,25 @@ foreach ($package in $packages){
 				Exit
 			}
 
-		  # get the package local version
-		  $LocalVer = getLocalVersion($package)
+			# get the package local version
+			$LocalVer = getLocalVersion($package)
 
-		  Write-Output "Local version of $package is $LocalVer"
+			Write-Output "Local version of $package is $LocalVer"
 
-		  $RemoteVer = getRemoteVersion($package)
+			$RemoteVer = getRemoteVersion($package)
 
-		  Write-Output "Remote version of $package is $RemoteVer"
+			Write-Output "Remote version of $package is $RemoteVer"
 
-		  # if remote version is newer, drop older and get newer
-		  if ($RemoteVer -gt $LocalVer) {
-			
-			Write-Ouput "Updating $package to version $RemoteVer"
+			# if remote version is newer, drop older and get newer
+			if ($RemoteVer -gt $LocalVer) {
+				
+				Write-Ouput "Updating $package to version $RemoteVer"
 
-			remove($package)
+				remove($package)
 
-			install($package)
-		  }
+				install($package)
+			}
+			continue
 		}
 	} catch {
 		echo "$operation failed for $package!"

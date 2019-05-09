@@ -11,10 +11,10 @@ $download_name="$pkgname.exe"
 function arrange($fname, $exdir) {
 
 	# there is a file called 'julia-installer.exe' that needs to be extracted
-	7z x $fname -o"$exdir"
+	7z x $fname -o"$exdir" | out-null
 	
 	# extract the julia installer
-	7z x "$exdir\$pkgname-installer.exe" -o"$exdir\"
+	7z x "$exdir\$pkgname-installer.exe" -o"$exdir\" | out-null
 	
 	Remove-Item "$exdir\Uninstall.exe"
 	Remove-Item "$exdir\$pkgname-installer.exe"

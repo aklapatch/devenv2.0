@@ -50,7 +50,6 @@ function listRecipies {
 }
  #-----------------------------------------------------------------------------
 function printUsage {
-
 	Write-Output "`nUsage:    $PSCommandPath operation packageName"
 	Write-Output "Possible operations: add (retrieves and installs packages)"
 	Write-Output "                     drop (uninstalls package)"
@@ -262,7 +261,6 @@ function getRemoteVersion($package) {
   return getIntFromVer($version)
 }
 # --------------------------------------------------------------#
-
 function getIntFromVer($StringVersion){
   $StringVersion = $StringVersion.replace(".", "")
   return [convert]::ToInt32($StringVersion,10)

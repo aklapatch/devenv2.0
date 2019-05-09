@@ -11,7 +11,7 @@ $download_name="$pkgname.exe"
 function arrange($fname, $exdir) {
 
 	# extract the files 
-	7z x $fname -o"$exdir"
+	7z x $fname -o"$exdir"| out-null
 	
 	Remove-Item "$exdir\Uninstall.exe"
 	Remove-Item	"$exdir\`$PLUGINSDIR" -Recurse 
