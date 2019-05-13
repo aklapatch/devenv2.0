@@ -117,11 +117,14 @@ foreach ($package in $packages){
 			
 			# all is a special case to delete all the installed files
 			if ( $package -eq "all"){
+				Write-Output "Removing all files from $global:fileroot"
+				
 				# delete all files
 				Remove-Item -Force -Recurse "$global:fileroot\*"
 				# delete installation files
 				Remove-Item -Force "$global:installeddir\*"
-			
+				
+				Exit
 			}
 			
 			elseif ( -Not (installed $package) ) {
@@ -139,7 +142,7 @@ foreach ($package in $packages){
 		if ($operation -eq $global:operations[2] ) {
 			
 			if ( installed $package ) {
-				echo "$package is installed"
+				"$package is installed"
 			}
 			else {
 				echo "$package is not installed"
@@ -169,7 +172,7 @@ foreach ($package in $packages){
 			# if remote version is newer, drop older and get newer
 			if ($RemoteVer -gt $LocalVer) {
 				
-				Write-Ouput "Updating $package to version $RemoteVer"
+				Write-Output "Updating $package to version $RemoteVer"
 
 				remove($package)
 
@@ -177,7 +180,8 @@ foreach ($package in $packages){
 			}
 			continue
 		}
-	} catch {
+	} catch [Exception] {
 		echo "$operation failed for $package!"
+		echo $_.Exception.GetType().FullName, $_.Exception.Message
 	}
 }

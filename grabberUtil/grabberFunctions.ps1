@@ -210,8 +210,15 @@ function remove($package) {
 	}
 	
 	# delete the files list and the version file
+	Write-Output "`nDeleting version file and file record file for $package"
 	Remove-Item $filespath  -Force
 	Remove-Item "$global:installeddir\$package-version"  -Force
+
+	# removing cached download file
+	if (Test-Path "$global:installeddir\$download_name"){}
+		Write-Output "`nDeleting the cached download file."
+		Remove-Item "$global:installeddir\$download_name"
+	}
 	
 	# run cleanup script
 	Write-Output "`nRunning cleanup function"
