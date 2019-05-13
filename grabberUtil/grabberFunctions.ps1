@@ -215,7 +215,7 @@ function remove($package) {
 	Remove-Item "$global:installeddir\$package-version"  -Force
 
 	# removing cached download file
-	if (Test-Path "$global:installeddir\$download_name"){}
+	if (Test-Path "$global:installeddir\$download_name"){
 		Write-Output "`nDeleting the cached download file."
 		Remove-Item "$global:installeddir\$download_name"
 	}
