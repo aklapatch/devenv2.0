@@ -116,13 +116,21 @@ foreach ($package in $packages){
 		if ( $operation -eq $global:operations[1] ) {
 			
 			# all is a special case to delete all the installed files
-			if ( $package -eq "all"){}
+			if ( $package -eq "all"){
+				# delete all files
+				Remove-Item -Force -Recurse "$global:fileroot\*"
+				# delete installation files
+				Remove-Item -Force "$global:installeddir\*"
+			
+			}
 			
 			elseif ( -Not (installed $package) ) {
 				Write-Output "$package is not installed"
-			}
+				
+			} else {
 			
-			remove $package
+				remove $package
+			}
 
 			continue
 		}
