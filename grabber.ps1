@@ -1,6 +1,6 @@
 
 $global:operations=@("add","drop","check","list","clean","update")
-$global:recipiedir= -join($PSScriptRoot,"\recipies")
+$global:recipiedir= -join($PSScriptRoot,"\recipes")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
 $global:funcPath=".\grabberUtil\grabberFunctions.ps1" # a path to a script with extra functions
