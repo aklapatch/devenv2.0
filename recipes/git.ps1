@@ -10,9 +10,11 @@ $download_name="$pkgname.exe"
 
 # list of exectuable to link
 $Dir = "mingw64\bin"
-$PackageExecFiles = @([Tuple]::Create("$Dir\git.exe","bin\git.exe")
+$PackageExecFiles = @([Tuple]::Create("bin\git.exe","bin\git.exe")
                       [Tuple]::Create("$Dir\curl.exe","bin\curl.exe") 
-                      [Tuple]::Create("\git-bash.exe","\git-bash.exe"))
+                      [Tuple]::Create("\git-bash.exe","\git-bash.exe")
+                      [Tuple]::Create("bin\sh.exe","bin\sh.exe")
+                      [Tuple]::Create("bin\bash.exe","bin\bash.exe"))
 
 $PackageStaticFiles = @()
 function arrange($fname, $exdir) {
