@@ -8,6 +8,8 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.exe"
 
+# Files to link as a executables (get linked over as .bat files)
+$PackageExecFiles =@([Tuple]::Create("bin\julia.exe","bin\julia.exe") )
 function arrange($fname, $exdir) {
 
 	# there is a file called 'julia-installer.exe' that needs to be extracted

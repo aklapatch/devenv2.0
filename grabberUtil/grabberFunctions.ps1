@@ -1,240 +1,255 @@
 # catalogs files and prints them all to a text file 
 function catalogFiles($dir_name,$out_file) {
 
-	if ( -Not (Test-Path $dir_name)){
-		Write-Output "catalogFiles failed since the directory is invalid"
-		return
-	}
+  if ( -Not (Test-Path $dir_name)){
+    Write-Output "catalogFiles failed since the directory is invalid"
+    return
+  }
 
-	# clear the output file
-	if ( Test-Path $out_file ){
-		Remove-Item -Force $out_file
-	}
-	
-	$len=$dir_name.length
-	
-	$concatPaths = ""
-	
-	# go through all the files in the directory
-	get-childItem $dir_name -recurse -file | foreach-object {
-		
-		# filter out the dir_name
-		$short_path=$_.FullName.substring($len)
+  # clear the output file
+  if ( Test-Path $out_file ){
+    Remove-Item -Force $out_file
+  }
+  
+  $len=$dir_name.length
+  
+  $concatPaths = ""
+  
+  # go through all the files in the directory
+  get-childItem $dir_name -recurse -file | foreach-object {
+    
+    # filter out the dir_name
+    $short_path=$_.FullName.substring($len)
 
-		# make the installed dir if is is not there
-		if ( -Not(Test-Path $global:installeddir) ){
-			mkdir $global:installeddir
-		}
-		
-		# store the Paths to be dumped to file later
-		$concatPaths=-join("$concatPaths","`n","$short_path")
-	}	
-	
-	echo "$concatPaths" >> $out_file
+    # make the installed dir if is is not there
+    if ( -Not(Test-Path $global:installeddir) ){
+      mkdir $global:installeddir
+    }
+    
+    # store the Paths to be dumped to file later
+    $concatPaths=-join("$concatPaths","`n","$short_path")
+  }	
+  
+  Write-Output "$concatPaths" >> $out_file
 }
 
 # gets available recipies and prints them
 function listRecipies {
-	
-	if (-Not (Test-Path $global:recipiedir)) {
-		Write-Output "recipiedir is not valid"
-		Exit
-	}
-	
-	echo "Possible recipies are: "
+  
+  if (-Not (Test-Path $global:recipiedir)) {
+    Write-Output "recipiedir is not valid"
+    Exit
+  }
+  
+  Write-Output "Possible recipies are: "
 
-	$rep_len=$global:recipiedir.Length
-	Get-ChildItem $global:recipiedir -Filter *.ps1 | 	Foreach-Object {
-		$diff_len=$_.FullName.Length - $rep_len -1
-		echo $_.FullName.substring($rep_len+1, $diff_len-4)	
-	} 
+  $rep_len=$global:recipiedir.Length
+  Get-ChildItem $global:recipiedir -Filter *.ps1 | 	Foreach-Object {
+    $diff_len=$_.FullName.Length - $rep_len -1
+    Write-Output $_.FullName.substring($rep_len+1, $diff_len-4)	
+  } 
 }
 
 # --------------------------------------------------------------#
 function checkArgs($operation,$package) {
-	
-	# check for the second arg or package
-	if ( [string]::IsNullOrEmpty($operation) ) {
-		printUsage
-		Exit
-	}
-	
-	# check for the second arg or package
-	if (  -Not ($operation -in $global:operations) ) {
-		printUsage
-		Exit
-	}
-	
-	# check for the second arg or package
-	if ( [string]::IsNullOrEmpty($package) ) {
-		Write-Output "Please specify what package you want to $args"
-		
-		# print possibilities
-		listRecipies
-		Exit
-	}
-	
-	# special case to remove all files
-	if ( ($package -eq "all") -and ($operation -eq "drop")){
-		return
-	}
-	
-	# check if a package is available
-	$reppath= "$global:recipiedir\$($package)$(".ps1")"
-	if ( -Not ( Test-Path $reppath) ) {
-		Write-Output "Recipie for $package not found in $global:recipiedir"
+  
+  # check for the second arg or package
+  if ( [string]::IsNullOrEmpty($operation) ) {
+    printUsage
+    Exit
+  }
+  
+  # check for the second arg or package
+  if (  -Not ($operation -in $global:operations) ) {
+    printUsage
+    Exit
+  }
+  
+  # check for the second arg or package
+  if ( [string]::IsNullOrEmpty($package) ) {
+    Write-Output "Please specify what package you want to $args"
+    
+    # print possibilities
+    listRecipies
+    Exit
+  }
+  
+  # special case to remove all files
+  if ( ($package -eq "all") -and ($operation -eq "drop")){
+    return
+  }
+  
+  # check if a package is available
+  $reppath= "$global:recipiedir\$($package)$(".ps1")"
+  if ( -Not ( Test-Path $reppath) ) {
+    Write-Output "Recipie for $package not found in $global:recipiedir"
 
-		# print possibilities
-		listRecipies
-		Exit
-	}
+    # print possibilities
+    listRecipies
+    Exit
+  }
+}
+
+#==============================================================================
+function linkPackageFiles($package){
+  # call download and extract script
+  $reppath="$global:recipiedir\$($package)$(".ps1")"
+
+  # source the recipies variables
+  # the script should extract to a dir called 'packageName'
+  . $reppath
+
+  $tmpdir="$global:recipiedir\$($package)"
+
+  # move the files over to the root 
+  Write-Output "`nLinking executables with bat files for $package"
+  foreach($link in $PackageExecFiles){ # $PackageExecFiles is from the $repath
+    $SrcFile = "$tmpdir\$($link.Item1)"
+    $DestLink = "$global:fileroot\$($link.Item2)"
+
+    if (Test-Path $SrcFile){
+      $null = makeCallerBat $DestLink $SrcFile    
+      # make each .bat link
+      # assigning to $null mutes output
+    } 
+    else {
+      Write-Output "`n$SrcFile not found, skipping link for that file."
+    }
+  }
+
+  Write-Output "`nLinking the static files for $package"
+  foreach($file in $PackageStaticFiles){
+    $SrcFile = "$tmpdir\$($file.Item1)"
+    $DestLink = "$global:fileroot\$($file.Item2)"
+
+    if (Test-Path $SrcFile){
+      $null = makeHardLink $SrcFile  $DestLink
+      # make each hard link
+      # assigning to $null mutes output
+    } 
+    else {
+      Write-Output "`n$SrcFile not found, skipping link for that file."
+    }
+  }
+
 }
 # --------------------------------------------------------------#
 
 # installs the specified package
 function install($package){
 
-	if (installed $package){
-		Write-Output "$package is installed"
-		return
-	}
-	
-		# call download and extract script
-	$reppath="$global:recipiedir\$($package)$(".ps1")"
-	
-	# source the recipies variables
-	# the script should extract to a dir called 'packageName'
-	. $reppath
-	
-	if ( $requires.Length -gt 0) {  
-		Foreach($dep in $requires){
-		
-			If ( -Not (installed($dep)) ){
-				echo "Installing $dep"
-				install $dep
-			}
-		}
-	}
-	
-	$pkgver=0	
-	# get file information
-	$pkginfo=getInfo
-	
-	$url=$pkginfo[1]
-	$pkgver=$pkginfo[0]
-	Write-Output "Installing $package version $pkgver"
-		
-	if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
-		echo "Downloading file for $package"
-		 
-		# download file
-		(New-Object System.Net.WebClient).DownloadFile($url,"$global:recipiedir\$download_name")
-	}
-	
-	$tmpdir="$global:recipiedir\$($package)"
-	$file_path="$global:recipiedir\$($download_name)"
-	
-	if (Test-Path $tmpdir) {
-		Write-Output "`nRemoving extraction directory before extraction"
-		Remove-Item $tmpdir -Force -Recurse
-	}
-	
-	# extract the files
-	Write-Output "`nArranging files for $package"
-	arrange $file_path $tmpdir
-	
-	# use getFiles.bat to catalog the files
-	Write-Output "`nCataloging files for $package"
-	catalogFiles $tmpdir  "$global:recipiedir\installed\$($package)$("_files.txt")"
-	
-	#output the version of the file
-	echo "$pkgver" > "$global:installeddir\$package-version"
-	
-	# move the files over to the root 
-	Write-Output "`nCopying over files for $package"
-	robocopy /MOVE /E /njh /njs /ndl /nc /ns /np /nfl "$tmpdir\" $global:fileroot
-	
-	# delete leftover folder
-	if (Test-Path $tmpdir) {
-		Write-Output "`nDeleting extraction directory"
-		Remove-Item "$tmpdir" -Force -Recurse
-	}
+  if (installed $package){
+    Write-Output "$package is installed"
+    return
+  }
+  
+    # call download and extract script
+  $reppath="$global:recipiedir\$($package)$(".ps1")"
+  
+  # source the recipies variables
+  # the script should extract to a dir called 'packageName'
+  . $reppath
+  
+  if ( $requires.Length -gt 0) {  
+    Foreach($dep in $requires){
+    
+      If ( -Not (installed($dep)) ){
+        Write-Output "Installing $dep"
+        install $dep
+      }
+    }
+  }
+  
+  $pkgver=0	
+  # get file information
+  $pkginfo=getInfo
+  
+  $url=$pkginfo[1]
+  $pkgver=$pkginfo[0]
+  Write-Output "Installing $package version $pkgver"
+    
+  if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
+    Write-Output "Downloading file for $package"
+     
+    # download file
+    (New-Object System.Net.WebClient).DownloadFile($url,"$global:recipiedir\$download_name")
+  }
+  
+  $tmpdir="$global:recipiedir\$($package)"
+  $file_path="$global:recipiedir\$($download_name)"
+  
+  if (Test-Path $tmpdir) {
+    Write-Output "`nRemoving extraction directory before extraction"
+    Remove-Item $tmpdir -Force -Recurse
+  }
+  
+  # extract the files
+  Write-Output "`nArranging files for $package"
+  arrange $file_path $tmpdir
+  
+  #link files
+  linkPackageFiles $package
+
+  #output the version of the file
+  Write-Output "$pkgver" > "$global:installeddir\$package-version"
+
+  Write-Output "`n$package is installed."
 }
 # --------------------------------------------------------------#
+function remove($package) {	
+  # if the $package is all, just delete all the files in the root and
+  # remove the cataloged files
+  if ( $package -eq "all"){
+    Remove-Item "$global:recipiedir\installed\*" -Force
+    Remove-Item "$global:fileroot\*" -Recurse -Force
 
-function remove($package) {
-	
-	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
-	
-	#
-	$reppath="$global:recipiedir\$($package)$(".ps1")"
-	
-	
-	# if the $package is all, just delete all the files in the root and
-	# remove the cataloged files
-	if ( $package -eq "all"){
-		Remove-Item "$global:recipiedir\installed\*"
-		Remove-Item "$global:fileroot\*" -Recurse -Force
-		
-		Exit
-	}
-	
-	# source the recipies variables
-	# the script should extract to a dir called 'packageName'
-	. $reppath
+    # TODO remove all extrected directories
+    Get-ChildItem $global:recipiedir -Directory | foreach-object {
+      
+      #don't delete the installed folder
+      if ( -Not ($_.Name -eq "installed")){
+        Remove-Item -Force -Recurse "$global:recipiedir\$($_.Name)"
+      }
+    }
+    Exit
+  }
 
-	# get file list
-	$files= Get-Content $filespath
-	
-	$other_files=""
-	# get a list of all other to make sure duplicate files are not deleted
-	Get-ChildItem $global:installeddir -Filter *_files.txt | foreach-object {
-		
-		# don't count the $package file
-		if (-Not ($_.Name -Like "$package*") ){
-			
-			$other_files+=$(Get-Content $_.FullName)
-		}
-	}	
+  $reppath="$global:recipiedir\$($package)$(".ps1")"
 
-	Write-Output "`nDeleting files for $package"
-	foreach ($file in $files) {
-		$file=$file.Trim()
-		$fpath="$global:fileroot\$($file)"
+  $ExtractedDir = "$global:recipiedir\$($package)"
+  
+  # source the recipies variables
+  # the script should extract to a dir called 'packageName'
+  . $reppath
 
-		# only delete files that are not duplicates
-		if ( -Not( $other_files.contains($file) )){
+  Write-Output "`nDeleting files for $package"
+  foreach ($link in $PackageLinkList) { 
+    # Item2 refers to the actual link
+    $LinkPath = "$global:fileroot\$($link.Item2)"
 
-			Remove-Item -force $fpath 
-		}
-	}
-	
-	# delete the files list and the version file
-	Write-Output "`nDeleting version file and file record file for $package"
-	Remove-Item $filespath  -Force
-	Remove-Item "$global:installeddir\$package-version"  -Force
+    if (Test-Path "$LinkPath"){
+      Remove-Item "$LinkPath"
+    }
+  }
+  
+  # delete the version file
+  Write-Output "`nDeleting version file for $package"
+  Remove-Item "$global:installeddir\$package-version"  -Force
 
-	# removing cached download file
-	if (Test-Path "$global:installeddir\$download_name"){
-		Write-Output "`nDeleting the cached download file."
-		Remove-Item "$global:installeddir\$download_name"
-	}
-	
-	# run cleanup script
-	Write-Output "`nRunning cleanup function"
-	cleanUp $global:fileroot
+  # delete Directory where the files were extracted
+  Remove-Item -Force -Recurse "$ExtractedDir"
 }
 
 # --------------------------------------------------------------#
 
 function installed($package){
-	$filespath="$global:recipiedir\installed\$($package)$("_files.txt")"
+  $filespath="$global:recipiedir\installed\$($package)$("-version")"
 
-	# package is installed
-	if ( Test-Path $filespath ) {
-		return $true
-	}
-	return $false
+  # package is installed
+  if ( Test-Path $filespath ) {
+    return $true
+  }
+  return $false
 }
 
 # --------------------------------------------------------------#
@@ -247,10 +262,10 @@ function getLocalVersion($package) {
 # --------------------------------------------------------------#
 function getRemoteVersion($package) {
   # call download and extract script
-	$reppath="$global:recipiedir\$($package)$(".ps1")"
-	
-	# source the recipies variables
-	# the script should extract to a dir called 'packageName'
+  $reppath="$global:recipiedir\$($package)$(".ps1")"
+  
+  # source the recipies variables
+  # the script should extract to a dir called 'packageName'
   . $reppath
   
   $version,$url = getInfo $base_url
@@ -262,51 +277,81 @@ function getIntFromVer($StringVersion){
   $StringVersion = $StringVersion.replace(".", "")
   return [convert]::ToInt32($StringVersion,10)
 }
+#==============================================================================
+# make a bat file that will call $CalleePath (relative paths)
+# also pass the arguments to $CalleePath
+function makeCallerBat($CallerPath, $CalleePath){
+  # get rid of any '\\', mklink does not work with them
+  $CallerPath = $CallerPath.Replace('\\','\')
+  $CallerPath = $CallerPath.Replace('.exe','')
+  $CalleePath = $CalleePath.Replace('\\','\')
+
+  # delete old link if it is there
+  if (Test-Path "$CallerPath"){
+    Remove-Item -Force "$CallerPath"
+  }
+
+    # find relative path
+  $BatDir = Split-Path -Path "$CallerPath"
+
+  # make the directory if it is not there already
+  if (-Not (Test-Path "$BatDir")){
+    mkdir $BatDir
+  }
+
+  $here = Get-Location
+  Set-Location $BatDir
+  $RelPath = Resolve-Path -Relative "$CalleePath"
+  Set-Location $here
+
+  # set the batch file to call the relative path
+  Write-Output "@echo off`n%~dp0$RelPath  %*" | Out-File -FilePath "$CallerPath.bat" -Encoding ascii
+}
 
 #==============================================================================
 # takes in an array of Tuples and links the first item(file), to the last item, the destination
 # both args should be absolute paths
-function makeLink{
-	param (
-		[string]$SrcFile= $(throw "Source file is required"),
-		[string]$LinkDest = $(throw "Link destination is required ")
-	)
-	# $env:SystemRoot = C:\Windows
+function makeHardLink{
+  param (
+    [string]$SrcFile= $(throw "Source file is required"),
+    [string]$LinkDest = $(throw "Link destination is required ")
+  )
+  # $env:SystemRoot = C:\Windows
 
-	# you could use Resolve-Path -Relative to get relative paths if need be https://stackoverflow.com/questions/12396025/how-to-convert-absolute-path-to-relative-path-in-powershell
-	# maybe Get-Location would be helpful
-	Write-Output "Linking $SrcFile to $LinkDest"
+  # get rid of any '\\', mklink does not work with them
+  $SrcFile.Replace('\\','\')
+  $LinkDest.Replace('\\','\')
 
-	# find relative path
-	$here = Get-Location
-	Set-Location (get-item "$LinkDest").Directory
-	$RelPath = Resolve-Path -Relative $SrcFile
-	Set-Location $here
+  # delete old link if it is there
+  if (Test-Path "$LinkDest"){
+    Remove-Item -Force "$LinkDest"
+  }
 
-	# delete old shortcut if it is there
-	if (Test-Path "$LinkDest.lnk"){
-		Remove-Item -Force "$LinkDest.lnk"
-	}
-	# delete old link if it is there
-	if (Test-Path "$LinkDest"){
-			Remove-Item -Force "$LinkDest"
-	}
+    # find relative path
+  $SrcDir = Split-Path -Path "$LinkDest"
 
-	# make shortcut
-	$SShell = New-Object -ComObject WScript.Shell
-	$Link = $SShell.CreateShortcut("$LinkDest.lnk")
-	$Link.TargetPath = "$SrcFile" # this needs! quotes
-	$Link.Save()
+  # make the directory if it is not there already
+  if (-Not (Test-Path "$SrcDir")){
+    mkdir $SrcDir
+  }
 
-	Rename-Item -Path "$LinkDest.lnk" "$LinkDest"  -Force
+  $here = Get-Location
+  Set-Location $SrcDir
+  $RelPath = Resolve-Path -Relative "$SrcFile"
+  $RelPath = $RelPath.Substring(2, $RelPath.Length-2)
+  Set-Location $here
+
+  # make the hard link
+  $cmdstr = "cmd /c mklink /H $LinkDest $SrcFile"
+  Invoke-Expression $cmdstr
 }
 
 # =============================================================================
 # a wrapper around `makeLink` that just links a file in a different directory
 # both directories should be full paths
+# all the arguments must not have a trailing backslash
 function linkFile($FName, $SrcDir, $DestDir){
-	$arg1 = "$SrcDir\$FName"
-	$arg2 = "$DestDir\$FName"
-	makeLink $arg1  $arg2
+  $arg1 = "$SrcDir\$FName"
+  $arg2 = "$DestDir\$FName"
+  makeLink $arg1  $arg2
 }
-

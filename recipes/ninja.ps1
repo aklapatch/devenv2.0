@@ -9,10 +9,11 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
 
-function arrange($fname, $exdir) {
+# Files to link as a executables (get linked over as .bat files)
+$PackageExecFiles =@([Tuple]::Create("ninja.exe","bin\ninja.exe"))
 
-	7z x "$($fname)" -o"$exdir\bin"  | out-null
-	
+function arrange($fname, $exdir) {
+	7z x "$($fname)" -o"$exdir"  | out-null
 }
 
 function getInfo() {

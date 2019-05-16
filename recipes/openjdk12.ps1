@@ -9,6 +9,9 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
 
+# Files to link as a executables (get linked over as .bat files)
+$PackageExecFiles =@([Tuple]::Create("bin\javac.exe","bin\javac.exe")
+              [Tuple]::Create("bin\java.exe","bin\java.exe") )
 function arrange($fname, $exdir) {
 
 	7z x "$fname" -o"$exdir" | out-null

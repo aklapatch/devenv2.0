@@ -41,7 +41,7 @@ function getInfo() {
 	
 	$len=$download_url.length
 	
-	$version=$download_url.substring($i+1)
+	$version=$download_url.substring($i+1, $len-($i+1))
 	
 	$dex=$version.indexof('-')
 	

@@ -7,14 +7,22 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
 
+# Files to link as a executables (get linked over as .bat files)
+$PackageExecFiles =@([Tuple]::Create("bin\cmake.exe","bin\cmake.exe")
+              [Tuple]::Create("bin\cmake-gui.exe","bin\cmake-gui.exe") )
+
+# Files to make hard links for (preferably headers and libraries)
+$PackageStaticFiles = @()
+
 function arrange($fname, $exdir) {
 
 	7z x "$($fname)" -o"$exdir"  | out-null
 	
+	# move files out from versioned folder
 	Get-ChildItem -Path "$exdir\cmake-*win64*\*" -Force | Move-Item -Destination "$exdir"	
 
 	# remove directory
-	Remove-Item "$exdir\cmake-*win64*"
+	Remove-Item -Force -Recurse "$exdir\cmake-*win64*"
 }
 
 function getInfo() {
