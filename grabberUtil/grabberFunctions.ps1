@@ -262,3 +262,51 @@ function getIntFromVer($StringVersion){
   $StringVersion = $StringVersion.replace(".", "")
   return [convert]::ToInt32($StringVersion,10)
 }
+
+#==============================================================================
+# takes in an array of Tuples and links the first item(file), to the last item, the destination
+# both args should be absolute paths
+function makeLink{
+	param (
+		[string]$SrcFile= $(throw "Source file is required"),
+		[string]$LinkDest = $(throw "Link destination is required ")
+	)
+	# $env:SystemRoot = C:\Windows
+
+	# you could use Resolve-Path -Relative to get relative paths if need be https://stackoverflow.com/questions/12396025/how-to-convert-absolute-path-to-relative-path-in-powershell
+	# maybe Get-Location would be helpful
+	Write-Output "Linking $SrcFile to $LinkDest"
+
+	# find relative path
+	$here = Get-Location
+	Set-Location (get-item "$LinkDest").Directory
+	$RelPath = Resolve-Path -Relative $SrcFile
+	Set-Location $here
+
+	# delete old shortcut if it is there
+	if (Test-Path "$LinkDest.lnk"){
+		Remove-Item -Force "$LinkDest.lnk"
+	}
+	# delete old link if it is there
+	if (Test-Path "$LinkDest"){
+			Remove-Item -Force "$LinkDest"
+	}
+
+	# make shortcut
+	$SShell = New-Object -ComObject WScript.Shell
+	$Link = $SShell.CreateShortcut("$LinkDest.lnk")
+	$Link.TargetPath = "$SrcFile" # this needs! quotes
+	$Link.Save()
+
+	Rename-Item -Path "$LinkDest.lnk" "$LinkDest"  -Force
+}
+
+# =============================================================================
+# a wrapper around `makeLink` that just links a file in a different directory
+# both directories should be full paths
+function linkFile($FName, $SrcDir, $DestDir){
+	$arg1 = "$SrcDir\$FName"
+	$arg2 = "$DestDir\$FName"
+	makeLink $arg1  $arg2
+}
+
