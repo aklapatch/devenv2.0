@@ -1,2 +1,0 @@
-convert to linking method instead of copying files
-* add the $PackageLinkList variable to all recipes
