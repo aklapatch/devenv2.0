@@ -24,6 +24,7 @@ Set-Location $PSScriptRoot
 
 # get the functions necessary for the package manager
 . $global:funcPath
+. $global:recipiedir\recipeFuncs.ps1
 
 # expand path to include necessary tools
 $root="$PSScriptRoot\root"
@@ -173,7 +174,7 @@ foreach ($package in $packages){
     # LINK CASE 
     # go through and run the linking loop again for the package
     if ($operation -eq $global:operations[6]) {
-      reLink $package
+      linkPackageFiles $package
     }
 
   } catch [Exception] {
