@@ -4,7 +4,6 @@ $pkgname="meson"
 # required dependencies
 $requires=@("7zip")
 
-
 #https://github.com/ninja-build/ninja/releases
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.msi"

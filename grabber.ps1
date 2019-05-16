@@ -3,7 +3,7 @@ $global:operations=@("add","drop","check","list","clean","update","link")
 $global:recipiedir= -join($PSScriptRoot,"\recipes")
 $global:installeddir= -join($global:recipiedir, "\installed")
 $global:fileroot= -join($PSScriptRoot,"\root")
-$global:funcPath=".\grabberUtil\grabberFunctions.ps1" # a path to a script with extra functions
+$global:funcPath=".\grabberUtil" # a path with scripts for extra functionality
 
  #-----------------------------------------------------------------------------
  function printUsage {
@@ -23,8 +23,8 @@ $global:funcPath=".\grabberUtil\grabberFunctions.ps1" # a path to a script with 
 Set-Location $PSScriptRoot
 
 # get the functions necessary for the package manager
-. $global:funcPath
-. $global:recipiedir\recipeFuncs.ps1
+. $global:funcPath\grabberFunctions.ps1
+. $global:funcPath\recipeFuncs.ps1
 
 # expand path to include necessary tools
 $root="$PSScriptRoot\root"
@@ -40,14 +40,16 @@ if ($args[0] -eq $global:operations[4]){
     # source script if it is there
     if (Test-Path $_.FullName){
       . $_.FullName
+	  
+	    # delete downloaded files if it is there
+		if (Test-Path "$global:recipiedir\$download_name" ){
+		  Write-NewLine "Removing $download_name"
+		  $null = Remove-Item "$global:recipiedir\$download_name"
+		}
     }
-    
-    # delete downloaded files if it is there
-    if (Test-Path "$global:recipiedir\$download_name" ){
-      
-      Remove-Item "$global:recipiedir\$download_name"
-    }
-  }
+  } | Out-Null # suppresses output
+  
+  Write-NewLine "Done"
   Exit
 }
 
@@ -66,7 +68,8 @@ if ($args[0] -eq $global:operations[3]) {
     $version=Get-Content -Path "$file_str"
     Write-Output "$item $version"
     
-  } 
+  }
+  
   Exit
 }
 

@@ -9,9 +9,6 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.zip"
 
-# source file for function
-. $global:recipiedir\recipeFuncs.ps1
-
 # Files to link as a executables (get linked over as .bat files)
 $PackageExecFiles = makeTransferList "bin" "bin" "exe" @("javac", "java","jar",
 	"javaw", "jdb")

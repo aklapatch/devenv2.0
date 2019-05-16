@@ -191,6 +191,9 @@ function install($package){
   linkPackageFiles $package
 
   #output the version of the file
+  if (-Not (Test-Path $global:installeddir)){
+	$null = mkdir $global:installeddir # mask output
+  }
   Write-Output "$pkgver" > "$global:installeddir\$package-version"
 
   Write-NewLine "$package is installed."
@@ -200,17 +203,17 @@ function remove($package) {
   # if the $package is all, just delete all the files in the root and
   # remove the cataloged files
   if ( $package -eq "all"){
-    Remove-Item "$global:recipiedir\installed\*" -Force
+	Write-NewLine "Removing ALL installed packages"
+	Write-NewLine "Removing installed links"
     Remove-Item "$global:fileroot\*" -Recurse -Force
 
-    # TODO remove all extrected directories
+	Write-NewLine "Removing ALL folders in $global:recipiedir"
     Get-ChildItem $global:recipiedir -Directory | foreach-object {
-      
-      #don't delete the installed folder
-      if ( -Not ($_.Name -eq "installed")){
-        Remove-Item -Force -Recurse "$global:recipiedir\$($_.Name)"
-      }
+	
+	  Write-Output "Removing the '$($_.Name)' folder"
+      $null = Remove-Item -Force -Recurse "$global:recipiedir\$($_.Name)"
     }
+	Write-NewLine "Done"
     Exit
   }
 

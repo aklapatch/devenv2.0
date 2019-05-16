@@ -8,20 +8,10 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.exe"
 
-function makeList(){
-  $Dir = "mingw64\bin"
-  $fileList = @("clang","clang++","clang-check","clang-format", "clang-refactor",
-      "clang-tidy", "lld", "lldb", "lld-link", "llvm-ar","llvm-lib",
-      "llvm-objdump","llvm-ranlib","llvm-rc","wasm-ld")
-
-  $output = @()
-  foreach($File in $fileList){
-    $output += [Tuple]::Create("bin\$File.exe","bin\$File.exe")
-  }
-  return $output
-}
-
-$PackageExecFiles = makeList
+$PackageExecFiles = makeTransferList "bin" "bin" "exe" @("clang","clang++",
+  "clang-check","clang-format", "clang-refactor", "clang-tidy", "lld", "lldb",
+  "lld-link", "llvm-ar","llvm-lib", "llvm-objdump","llvm-ranlib","llvm-rc",   
+  "wasm-ld")
 
 function arrange($fname, $exdir) {
 

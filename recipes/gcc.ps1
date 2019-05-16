@@ -9,23 +9,11 @@ $requires=@("7zip")
 # name of the file once downloaded (it will be named that once the main script downloads it)
 $download_name="$pkgname.7z"
 
-
-# 
-function makeList(){
-  $Dir = "mingw64\bin"
-  $fileList = @("addr2line","ar","as","dlltool", "dllwrap", "dwp", "elfedit", "g++", "gcc", 
-            "gcc-ar","gcc-nm","gcc-ranlib","gdb","gdb","gdbserver","gendef","mingw32-make","objcopy","objdump"
-            "ranlib","readelf","size","strings","strip","windres")
-
-  $output = @()
-  foreach($File in $fileList){
-    $output += [Tuple]::Create("$Dir\$File.exe","bin\$File.exe")
-  }
-  return $output
-}
-
 # Files to link as a executables (get linked over as .bat files)
-$PackageExecFiles = makeList 
+$PackageExecFiles =  makeTransferList "bin" "bin" "exe" @("addr2line","ar","as",
+  "dlltool", "dllwrap", "dwp", "elfedit", "g++", "gcc", "gcc-ar","gcc-nm",    
+  "gcc-ranlib","gdb","gdbserver","gendef","mingw32-make","objcopy","objdump",
+  "ranlib","readelf","size","strings","strip","windres")
 
 function arrange($fname, $exdir) {
   7z x "$($fname)" -o"$exdir" | Out-Null
