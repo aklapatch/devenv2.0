@@ -2,7 +2,7 @@
 function catalogFiles($dir_name,$out_file) {
 
   if ( -Not (Test-Path $dir_name)){
-    Write-Output "catalogFiles failed since the directory is invalid"
+    Write-NewLine "catalogFiles failed since the directory is invalid"
     return
   }
 
@@ -30,18 +30,18 @@ function catalogFiles($dir_name,$out_file) {
     $concatPaths=-join("$concatPaths","`n","$short_path")
   }	
   
-  Write-Output "$concatPaths" >> $out_file
+  Write-NewLine "$concatPaths" >> $out_file
 }
 
 # gets available recipies and prints them
 function listRecipies {
   
   if (-Not (Test-Path $global:recipiedir)) {
-    Write-Output "recipiedir is not valid"
+    Write-NewLine "recipiedir is not valid"
     Exit
   }
   
-  Write-Output "Possible recipies are: "
+  Write-NewLine "Possible recipies are: "
 
   $rep_len=$global:recipiedir.Length
   Get-ChildItem $global:recipiedir -Filter *.ps1 | 	Foreach-Object {
@@ -67,7 +67,7 @@ function checkArgs($operation,$package) {
   
   # check for the second arg or package
   if ( [string]::IsNullOrEmpty($package) ) {
-    Write-Output "Please specify what package you want to $args"
+    Write-NewLine "Please specify what package you want to $args"
     
     # print possibilities
     listRecipies
@@ -82,7 +82,7 @@ function checkArgs($operation,$package) {
   # check if a package is available
   $reppath= "$global:recipiedir\$($package)$(".ps1")"
   if ( -Not ( Test-Path $reppath) ) {
-    Write-Output "Recipie for $package not found in $global:recipiedir"
+    Write-NewLine "Recipie for $package not found in $global:recipiedir"
 
     # print possibilities
     listRecipies
@@ -102,7 +102,7 @@ function linkPackageFiles($package){
   $tmpdir="$global:recipiedir\$($package)"
 
   # move the files over to the root 
-  Write-Output "`nLinking executables with bat files for $package"
+  Write-NewLine "Linking executables with bat files for $package"
   foreach($link in $PackageExecFiles){ # $PackageExecFiles is from the $repath
     $SrcFile = "$tmpdir\$($link.Item1)"
     $DestLink = "$global:fileroot\$($link.Item2)"
@@ -113,11 +113,11 @@ function linkPackageFiles($package){
       # assigning to $null mutes output
     } 
     else {
-      Write-Output "`n$SrcFile not found, skipping link for that file."
+      Write-NewLine "$SrcFile not found, skipping link for that file."
     }
   }
 
-  Write-Output "`nLinking the static files for $package"
+  Write-NewLine "Linking the static files for $package"
   foreach($file in $PackageStaticFiles){
     $SrcFile = "$tmpdir\$($file.Item1)"
     $DestLink = "$global:fileroot\$($file.Item2)"
@@ -128,7 +128,7 @@ function linkPackageFiles($package){
       # assigning to $null mutes output
     } 
     else {
-      Write-Output "`n$SrcFile not found, skipping link for that file."
+      Write-NewLine "$SrcFile not found, skipping link for that file."
     }
   }
 
@@ -139,7 +139,7 @@ function linkPackageFiles($package){
 function install($package){
 
   if (installed $package){
-    Write-Output "$package is installed"
+    Write-NewLine "$package is installed"
     return
   }
   
@@ -154,7 +154,7 @@ function install($package){
     Foreach($dep in $requires){
     
       If ( -Not (installed($dep)) ){
-        Write-Output "Installing $dep"
+        Write-NewLine "Installing $dep"
         install $dep
       }
     }
@@ -166,10 +166,10 @@ function install($package){
   
   $url=$pkginfo[1]
   $pkgver=$pkginfo[0]
-  Write-Output "Installing $package version $pkgver"
+  Write-NewLine "Installing $package version $pkgver"
     
   if ( -Not (Test-Path "$($global:recipiedir)\$($download_name)")) {
-    Write-Output "Downloading file for $package"
+    Write-NewLine "Downloading file for $package"
      
     # download file
     (New-Object System.Net.WebClient).DownloadFile($url,"$global:recipiedir\$download_name")
@@ -179,12 +179,12 @@ function install($package){
   $file_path="$global:recipiedir\$($download_name)"
   
   if (Test-Path $tmpdir) {
-    Write-Output "`nRemoving extraction directory before extraction"
+    Write-NewLine "Removing extraction directory before extraction"
     Remove-Item $tmpdir -Force -Recurse
   }
   
   # extract the files
-  Write-Output "`nArranging files for $package"
+  Write-NewLine "Arranging files for $package"
   arrange $file_path $tmpdir
   
   #link files
@@ -193,7 +193,7 @@ function install($package){
   #output the version of the file
   Write-Output "$pkgver" > "$global:installeddir\$package-version"
 
-  Write-Output "`n$package is installed."
+  Write-NewLine "$package is installed."
 }
 # --------------------------------------------------------------#
 function remove($package) {	
@@ -222,7 +222,7 @@ function remove($package) {
   # the script should extract to a dir called 'packageName'
   . $reppath
 
-  Write-Output "`nDeleting files for $package"
+  Write-NewLine "Deleting files for $package"
   foreach ($link in $PackageLinkList) { 
     # Item2 refers to the actual link
     $LinkPath = "$global:fileroot\$($link.Item2)"
@@ -233,7 +233,7 @@ function remove($package) {
   }
   
   # delete the version file
-  Write-Output "`nDeleting version file for $package"
+  Write-NewLine "`nDeleting version file for $package"
   Remove-Item "$global:installeddir\$package-version"  -Force
 
   # delete Directory where the files were extracted
@@ -354,4 +354,8 @@ function linkFile($FName, $SrcDir, $DestDir){
   $arg1 = "$SrcDir\$FName"
   $arg2 = "$DestDir\$FName"
   makeLink $arg1  $arg2
+}
+
+function Write-NewLine($OutString){
+  Write-Output "`n$OutString"
 }

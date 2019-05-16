@@ -7,7 +7,7 @@ $global:funcPath=".\grabberUtil\grabberFunctions.ps1" # a path to a script with 
 
  #-----------------------------------------------------------------------------
  function printUsage {
-  Write-Output "`nUsage:    $PSCommandPath operation packageName"
+  Write-NewLine "Usage:    $PSCommandPath operation packageName"
   Write-Output "Possible operations: add (retrieves and installs packages)"
   Write-Output "                     drop (uninstalls package)"
   Write-Output "                     list (lists installed packages)"
@@ -57,7 +57,7 @@ if ($args[0] -eq $global:operations[4]){
 if ($args[0] -eq $global:operations[3]) {
   
   if (-Not (Test-Path $global:installeddir)) {
-    Write-Output "Installation is not valid"
+    Write-NewLine "Installation is not valid"
   }
 
   Get-ChildItem "$global:installeddir" -Filter '*-version' | 	Foreach-Object {
@@ -102,7 +102,7 @@ foreach ($package in $packages){
       
       # check if a package is installed
       if ( installed $package ) {
-        Write-Output "$package is already installed"
+        Write-NewLine "$package is already installed"
         continue
       }
       
@@ -118,7 +118,7 @@ foreach ($package in $packages){
       
 
       if ( (-Not (installed $package)) -and ($package -ne "all")) {
-        Write-Output "$package is not installed"
+        Write-NewLine "$package is not installed"
         
       } else {
       
@@ -135,7 +135,7 @@ foreach ($package in $packages){
         "$package is installed"
       }
       else {
-        Write-Output "$package is not installed"
+        Write-NewLine "$package is not installed"
       }
       continue
     }
@@ -146,23 +146,23 @@ foreach ($package in $packages){
     if ($operation -eq $global:operations[5]) {
 
       if (-Not(installed $package)){
-        Write-Output "$package is not installed"
+        Write-NewLine "$package is not installed"
         Exit
       }
 
       # get the package local version
       $LocalVer = getLocalVersion($package)
 
-      Write-Output "Local version of $package is $LocalVer"
+      Write-NewLine "Local version of $package is $LocalVer"
 
       $RemoteVer = getRemoteVersion($package)
 
-      Write-Output "Remote version of $package is $RemoteVer"
+      Write-NewLine "Remote version of $package is $RemoteVer"
 
       # if remote version is newer, drop older and get newer
       if ($RemoteVer -gt $LocalVer) {
         
-        Write-Output "Updating $package to version $RemoteVer"
+        Write-NewLine "Updating $package to version $RemoteVer"
 
         remove($package)
 
@@ -174,11 +174,15 @@ foreach ($package in $packages){
     # LINK CASE 
     # go through and run the linking loop again for the package
     if ($operation -eq $global:operations[6]) {
-      linkPackageFiles $package
+      if (installed $package ){
+        linkPackageFiles $package
+      } else {
+        Write-NewLine "$package is not installed, skipping."
+      }
     }
 
   } catch [Exception] {
-    Write-Output "$operation failed for $package!"
+    Write-NewLine "$operation failed for $package!"
     Write-Output $_.Exception.GetType().FullName, $_.Exception.Message
   }
 }
